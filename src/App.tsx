@@ -1,12 +1,28 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import styles from "./app.module.css";
+import { calculateSelectionBox, Point } from "./helper";
 // import { useCanvasObject } from "./hook";
+import { debounce, throttle } from "lodash";
+
+interface SelectionBox {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
-  const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
-  const [endPoint, setEndPoint] = useState({ x: 0, y: 0 });
+  const [startPoint, setStartPoint] = useState<Point | null>(null);
+  const [endPoint, setEndPoint] = useState<Point | null>(null);
+  const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -20,41 +36,71 @@ function App() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
-  }, []);
+  }, [canvasRef]);
+
+  const onMouseMove = useCallback(
+    (event: any) => {
+      event.preventDefault();
+      if (isMouseDown && startPoint) {
+        const endPoint = {
+          x: event.pageX,
+          y: event.pageY,
+        };
+
+        const selectionBox = calculateSelectionBox(startPoint, endPoint);
+
+        setEndPoint(endPoint);
+        setSelectionBox(selectionBox);
+      }
+    },
+    [isMouseDown, startPoint]
+  );
+
+  useEffect(() => {
+    if (isMouseDown) {
+      window.addEventListener("mousemove", onMouseMove);
+    }
+  }, [isMouseDown, onMouseMove]);
+
+  useEffect(() => {
+    window.addEventListener("mouseup", function () {
+      window.removeEventListener("mousemove", onMouseMove);
+      onMouseDown(false);
+    });
+  });
 
   const onMouseDown = (event: any) => {
     setIsMouseDown(true);
     setStartPoint({ x: event.pageX, y: event.pageY });
   };
 
-  const onMouseMove = (event: any) => {
-    event.preventDefault();
-    if (isMouseDown) {
-      var endPoint = {
-        x: event.pageX,
-        y: event.pageY,
-      };
-
-      setEndPoint(endPoint);
-    }
-  };
-
   const onMouseUp = () => {
-    const left = Math.min(startPoint.x, endPoint.x);
-    const top = Math.min(startPoint.y, endPoint.y);
-    const width = Math.abs(startPoint.x - endPoint.x);
-    const height = Math.abs(startPoint.y - endPoint.y);
+    setIsMouseDown(false);
+    console.log("IS UP");
+    if (startPoint && endPoint) {
+      const { left, top, width, height } = calculateSelectionBox(
+        startPoint,
+        endPoint
+      );
 
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (canvas && ctx) {
-      ctx.fillStyle = "#FF0000";
-      ctx.fillRect(left, top, width, height);
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (canvas && ctx) {
+        ctx.fillStyle = "#D9D9D9";
+        ctx.fillRect(left, top, width, height);
+      }
+
+      setStartPoint(null);
+      setEndPoint(null);
+      setSelectionBox(null);
     }
   };
 
   return (
     <div className={styles.root}>
+      {isMouseDown && startPoint && endPoint && selectionBox && (
+        <div className={styles.selectionBox} style={selectionBox} />
+      )}
       <canvas
         ref={canvasRef}
         onMouseDown={onMouseDown}
