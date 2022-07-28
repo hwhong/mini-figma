@@ -22,7 +22,7 @@ function App() {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [endPoint, setEndPoint] = useState<Point | null>(null);
-  const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
+  // const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -38,36 +38,18 @@ function App() {
     }
   }, [canvasRef]);
 
-  const onMouseMove = useCallback(
-    (event: any) => {
-      event.preventDefault();
-      if (isMouseDown && startPoint) {
-        const endPoint = {
-          x: event.pageX,
-          y: event.pageY,
-        };
+  const onMouseMove = (event: any) => {
+    event.preventDefault();
+    if (isMouseDown && startPoint) {
+      const endPoint = {
+        x: event.pageX,
+        y: event.pageY,
+      };
 
-        const selectionBox = calculateSelectionBox(startPoint, endPoint);
-
-        setEndPoint(endPoint);
-        setSelectionBox(selectionBox);
-      }
-    },
-    [isMouseDown, startPoint]
-  );
-
-  useEffect(() => {
-    if (isMouseDown) {
-      window.addEventListener("mousemove", onMouseMove);
+      setEndPoint({ ...endPoint });
+      // setSelectionBox(selectionBox);
     }
-  }, [isMouseDown, onMouseMove]);
-
-  useEffect(() => {
-    window.addEventListener("mouseup", function () {
-      window.removeEventListener("mousemove", onMouseMove);
-      onMouseDown(false);
-    });
-  });
+  };
 
   const onMouseDown = (event: any) => {
     setIsMouseDown(true);
@@ -92,15 +74,19 @@ function App() {
 
       setStartPoint(null);
       setEndPoint(null);
-      setSelectionBox(null);
+      // setSelectionBox(null);
     }
   };
 
+  // let selectionBox = null;
+  // if (startPoint && endPoint) {
+  //   selectionBox = calculateSelectionBox(startPoint, endPoint);
+  // }
   return (
     <div className={styles.root}>
-      {isMouseDown && startPoint && endPoint && selectionBox && (
+      {/* {!isMouseDown && startPoint && endPoint && selectionBox && (
         <div className={styles.selectionBox} style={selectionBox} />
-      )}
+      )} */}
       <canvas
         ref={canvasRef}
         onMouseDown={onMouseDown}
