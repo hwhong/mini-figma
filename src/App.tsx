@@ -1,28 +1,22 @@
-import React, {
-  useRef,
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-} from "react";
+import React, { useRef, useEffect, useState } from "react";
 import styles from "./app.module.css";
-import { calculateSelectionBox, Point } from "./helper";
+import {
+  calculateSelectionBox,
+  Point,
+  isPointInRect,
+  Rectangle,
+} from "./helper";
 // import { useCanvasObject } from "./hook";
-import { debounce, throttle } from "lodash";
-
-interface SelectionBox {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
+// import { debounce, throttle } from "lodash";
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [endPoint, setEndPoint] = useState<Point | null>(null);
-  // const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
+  const [rectangles, setRectangles] = useState<Rectangle[]>([]);
+
+  const [selectionBox, setSelectionBox] = useState<Rectangle | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -47,13 +41,29 @@ function App() {
       };
 
       setEndPoint({ ...endPoint });
-      // setSelectionBox(selectionBox);
     }
   };
 
   const onMouseDown = (event: any) => {
+    const x = event.pageX;
+    const y = event.pageY;
     setIsMouseDown(true);
-    setStartPoint({ x: event.pageX, y: event.pageY });
+    setStartPoint({ x, y });
+
+    let isPointInRec: boolean = false;
+    if (rectangles.length) {
+      rectangles.forEach((rec) => {
+        if (isPointInRect(x, y, rec)) {
+          isPointInRec = true;
+          setSelectionBox(rec);
+        }
+      });
+    }
+
+    // case when click is directly on canvas and not on element
+    if (!isPointInRec) {
+      setSelectionBox(null);
+    }
   };
 
   const onMouseUp = () => {
@@ -74,6 +84,7 @@ function App() {
 
       setStartPoint(null);
       setEndPoint(null);
+      setRectangles([...rectangles, { left, top, width, height }]);
       // setSelectionBox(null);
     }
   };
@@ -84,9 +95,9 @@ function App() {
   // }
   return (
     <div className={styles.root}>
-      {/* {!isMouseDown && startPoint && endPoint && selectionBox && (
+      {selectionBox && (
         <div className={styles.selectionBox} style={selectionBox} />
-      )} */}
+      )}
       <canvas
         ref={canvasRef}
         onMouseDown={onMouseDown}
