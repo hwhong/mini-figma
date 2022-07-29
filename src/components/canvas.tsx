@@ -1,21 +1,18 @@
 import React, { useRef, useEffect, useState } from "react";
-import styles from "./app.module.css";
+import styles from "./canvas.module.css";
 import {
   calculateSelectionBox,
   Point,
   isPointInRect,
   Rectangle,
-} from "./helper";
-// import { useCanvasObject } from "./hook";
-// import { debounce, throttle } from "lodash";
+} from "../helper";
 
-function App() {
+function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [endPoint, setEndPoint] = useState<Point | null>(null);
   const [rectangles, setRectangles] = useState<Rectangle[]>([]);
-
   const [selectionBox, setSelectionBox] = useState<Rectangle | null>(null);
 
   useEffect(() => {
@@ -108,4 +105,4 @@ function App() {
   );
 }
 
-export default App;
+export default Canvas;
